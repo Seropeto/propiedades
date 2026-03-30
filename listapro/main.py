@@ -416,7 +416,7 @@ La descripción debe tener entre 150-200 palabras. Escribe en español.
 REGLAS OBLIGATORIAS (no las ignores):
 - Usa SIEMPRE "Dormitorios", NUNCA "recámaras" ni "habitaciones"
 - El precio es {datos['precio']} — inclúyelo exactamente así, SIN agregar "MXN", "pesos" ni ninguna moneda
-- Las amenidades son exactamente: {datos['amenidades']} — usa esos nombres exactos, no los traduzcas ni cambies
+- El equipamiento es exactamente: {datos['amenidades']} — usa esos nombres exactos, no los traduzcas ni cambies
 - No menciones país ni moneda
 
 Datos:
@@ -428,7 +428,7 @@ Datos:
 - Metros construidos: {datos['metros_construidos']} m²
 - Metros de terreno: {datos['metros_terreno']} m²
 - Estacionamientos: {datos['estacionamientos']}
-- Amenidades: {datos['amenidades']}
+- Equipamiento: {datos['amenidades']}
 - Notas del agente: {datos['descripcion_agente']}
 
 Genera SOLO la descripción, sin títulos ni encabezados."""
@@ -449,7 +449,7 @@ Genera un copy atractivo para Instagram. Escribe en español.
 REGLAS OBLIGATORIAS (no las ignores):
 - Usa SIEMPRE "Dormitorios", NUNCA "recámaras" ni "habitaciones"
 - El precio es {datos['precio']} — escríbelo exactamente así, SIN agregar "MXN", "pesos" ni moneda
-- Las amenidades son: {datos['amenidades']} — usa esos nombres exactos
+- El equipamiento es: {datos['amenidades']} — usa esos nombres exactos
 - Incluye 15 hashtags inmobiliarios genéricos (sin país específico)
 - Máximo 150 palabras + hashtags
 - Termina con llamado a la acción
@@ -460,7 +460,7 @@ Datos:
 - Precio: {datos['precio']}
 - Dormitorios: {datos['recamaras']} | Baños: {datos['banos']}
 - Metros construidos: {datos['metros_construidos']} m²
-- Amenidades: {datos['amenidades']}
+- Equipamiento: {datos['amenidades']}
 
 Genera SOLO el copy con hashtags."""
 
@@ -844,7 +844,7 @@ def crear_pdf(pdf_path, tipo_propiedad, operacion, direccion, ciudad, estado,
 
     # ── AMENIDADES ───────────────────────────────────────────
     if amenidades:
-        story.append(Paragraph("Amenidades", style_seccion))
+        story.append(Paragraph("Equipamiento", style_seccion))
         story.append(Paragraph(amenidades, style_body))
 
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0"),
