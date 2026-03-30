@@ -24,7 +24,8 @@ from datetime import datetime
 load_dotenv()
 
 # ── Base de datos ──────────────────────────────────────────────────────────────
-DB_PATH = "listapro.db"
+DB_PATH = "/data/db/listapro.db"
+os.makedirs("/data/db", exist_ok=True)
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
