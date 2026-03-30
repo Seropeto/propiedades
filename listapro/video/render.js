@@ -54,6 +54,20 @@ async function main() {
 
   composition.durationInFrames = durationInFrames;
 
+  // Detectar Chromium en Linux o Windows
+  const chromiumPaths = [
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+  ];
+  const fs = require('fs');
+  let browserExecutable = undefined;
+  for (const p of chromiumPaths) {
+    if (fs.existsSync(p)) { browserExecutable = p; break; }
+  }
+
+  process.stderr.write(`Using browser: ${browserExecutable || 'default'}\n`);
   process.stderr.write('Rendering...\n');
   await renderMedia({
     composition,
@@ -61,6 +75,11 @@ async function main() {
     codec: 'h264',
     outputLocation: outputPath,
     inputProps,
+    browserExecutable,
+    chromiumOptions: {
+      disableWebSecurity: true,
+      ignoreCertificateErrors: true,
+    },
     onProgress: ({ progress }) => {
       process.stderr.write(`progress:${Math.round(progress * 100)}\n`);
     },
