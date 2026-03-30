@@ -557,6 +557,9 @@ def crear_imagen_instagram(portada_path, img_path, operacion, precio,
     # Intentar cargar fuente del sistema, si no usar default
     def get_font(size):
         font_paths = [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
             "C:/Windows/Fonts/arialbd.ttf",
             "C:/Windows/Fonts/arial.ttf",
             "C:/Windows/Fonts/segoeui.ttf",
@@ -568,11 +571,11 @@ def crear_imagen_instagram(portada_path, img_path, operacion, precio,
                 continue
         return ImageFont.load_default()
 
-    font_badge   = get_font(32)
-    font_precio  = get_font(72)
-    font_ciudad  = get_font(38)
-    font_datos   = get_font(34)
-    font_logo    = get_font(28)
+    font_badge   = get_font(48)
+    font_precio  = get_font(108)
+    font_ciudad  = get_font(58)
+    font_datos   = get_font(52)
+    font_logo    = get_font(42)
 
     BLANCO  = (255, 255, 255)
     AMARILLO = (255, 215, 0)
