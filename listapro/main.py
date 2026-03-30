@@ -571,11 +571,11 @@ def crear_imagen_instagram(portada_path, img_path, operacion, precio,
                 continue
         return ImageFont.load_default()
 
-    font_badge   = get_font(48)
-    font_precio  = get_font(108)
-    font_ciudad  = get_font(58)
-    font_datos   = get_font(52)
-    font_logo    = get_font(42)
+    font_badge   = get_font(38)
+    font_precio  = get_font(88)
+    font_ciudad  = get_font(46)
+    font_datos   = get_font(42)
+    font_logo    = get_font(34)
 
     BLANCO  = (255, 255, 255)
     AMARILLO = (255, 215, 0)
