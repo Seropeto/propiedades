@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ToxiroPropiedades — Resultados</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>🏠 ToxiroPropiedades</h1>
+      <p>Tu listado profesional está listo</p>
+      <a href="/dashboard" class="btn-header">📋 Mis Propiedades</a>
+    </div>
+  </header>
+
+  <main id="resultados-main">
+    <div class="loading-state" id="loadingState">
+      <p>Cargando resultados...</p>
+    </div>
+  </main>
+
+  <script>
+    const data = JSON.parse(sessionStorage.getItem('listapro_result') || 'null');
+
+    if (!data) {
+      window.location.href = '/';
+    }
+
+    const main = document.getElementById('resultados-main');
+    const d = data.datos;
+
+    const operacionBadge = d.operacion === 'Venta' ? '🔵 En Venta' : '🟢 En Arriendo';
+
+    // Formatear precio con separador de miles
+    function formatPrecio(valor) {
+      if (!valor) return '';
+      const num = parseFloat(valor.toString().replace(/[^0-9.]/g, ''));
+      if (isNaN(num)) return valor;
+      return num.toLocaleString('es-CL');
+    }
+
+    // Normalizar nombre de amenidades en display
+    const amenidadesMap = {
+      'alberca': 'Piscina', 'Alberca': 'Piscina',
+      'roof_garden': 'Terraza', 'Roof Garden': 'Terraza',
+      'jardin': 'Jardín', 'recamaras': 'Dormitorios'
+    };
+    function normalizarAmenidades(texto) {
+      if (!texto) return '';
+      let result = texto;
+      Object.entries(amenidadesMap).forEach(([k, v]) => {
+        result = result.replace(new RegExp(k, 'gi'), v);
+      });
+      return result;
+    }
+
+    main.innerHTML = `
+      <!-- ENCABEZADO DE PROPIEDAD -->
+      <section class="card resultado-header">
+        <div class="prop-badge">${operacionBadge}</div>
+        <h2>${d.tipo_propiedad} — ${d.ciudad}, ${d.estado}</h2>
+        <p class="prop-direccion">📍 ${d.direccion}</p>
+        <p class="prop-precio">💰 $${formatPrecio(d.precio)}</p>
+
+        <div class="prop-stats">
+          ${d.recamaras ? `<span>🛏 ${d.recamaras} Dormitorios</span>` : ''}
+          ${d.banos ? `<span>🚿 ${d.banos} Baños</span>` : ''}
+          ${d.metros_construidos ? `<span>📐 ${d.metros_construidos} m²</span>` : ''}
+          ${d.estacionamientos ? `<span>🚗 ${d.estacionamientos} Est.</span>` : ''}
+        </div>
+
+        ${d.amenidades ? `<p class="prop-amenidades">✨ ${normalizarAmenidades(d.amenidades)}</p>` : ''}
+      </section>
+
+      <!-- FOTOS -->
+      <section class="card">
+        <h2>📸 Fotos</h2>
+        <img src="${data.portada_url}" class="portada-result" alt="Foto portada" />
+        ${data.extras_urls.length > 0 ? `
+          <div class="extras-preview">
+            ${data.extras_urls.map(url => `<img src="${url}" class="extra-thumb" />`).join('')}
+          </div>
+        ` : ''}
+      </section>
+
+      <!-- DESCRIPCIÓN PROFESIONAL -->
+      <section class="card">
+        <div class="result-header">
+          <h2>📝 Descripción Profesional</h2>
+          <button class="btn-copy" onclick="copyText('descripcion')">📋 Copiar</button>
+        </div>
+        <div class="result-text" id="descripcion">${data.descripcion}</div>
+        <div class="copy-feedback hidden" id="feedback-descripcion">✅ ¡Copiado!</div>
+      </section>
+
+      <!-- COPY INSTAGRAM -->
+      <section class="card">
+        <div class="result-header">
+          <h2>📱 Copy para Instagram</h2>
+          <button class="btn-copy" onclick="copyText('instagram')">📋 Copiar</button>
+        </div>
+        <div class="result-text instagram-copy" id="instagram">${data.copy_instagram.replace(/\n/g, '<br/>')}</div>
+        <div class="copy-feedback hidden" id="feedback-instagram">✅ ¡Copiado!</div>
+      </section>
+
+      <!-- DATOS DEL AGENTE -->
+      <section class="card agente-card">
+        <h2>👤 Agente</h2>
+        <p><strong>${d.nombre_agente}</strong></p>
+        <p>📞 ${d.telefono_agente}</p>
+        <p>✉️ ${d.email_agente}</p>
+      </section>
+
+      <!-- ACCIONES -->
+      <div class="actions-bar">
+        <a href="/" class="btn-secondary">← Nuevo Listado</a>
+        <button class="btn-pdf" id="btnPdf" onclick="generarPDF()">📄 Descargar PDF</button>
+        <button class="btn-imagen" id="btnImagen" onclick="generarImagen()">📸 Imagen Instagram</button>
+        <button class="btn-publicar" id="btnPublicar" onclick="publicarInstagram()" disabled>🚀 Publicar en Instagram</button>
+        <button class="btn-video" id="btnVideo" onclick="generarVideo()">🎬 Generar Video</button>
+      </div>
+      <div id="feedback-publicar" class="hidden" style="text-align:center;margin-top:12px;font-weight:bold;"></div>
+
+      <div id="video-progress" class="hidden" style="margin-top:16px;">
+        <div style="text-align:center;margin-bottom:8px;color:#A8CADF;font-size:0.9rem;" id="video-status">Preparando video...</div>
+        <div style="background:#0D1F30;border:1px solid #1C3650;border-radius:8px;height:10px;overflow:hidden;">
+          <div id="video-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#A07828,#C9A84C,#E8C96A);transition:width 0.5s ease;border-radius:8px;"></div>
+        </div>
+      </div>
+    `;
+
+    function copyText(elementId) {
+      const el = document.getElementById(elementId);
+      const text = el.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const feedback = document.getElementById('feedback-' + elementId);
+        feedback.classList.remove('hidden');
+        setTimeout(() => feedback.classList.add('hidden'), 2000);
+      });
+    }
+
+    async function generarImagen() {
+      const btn = document.getElementById('btnImagen');
+      btn.disabled = true;
+      btn.textContent = '⏳ Generando imagen...';
+
+      const formData = new FormData();
+      formData.append('session_id', data.session_id);
+      formData.append('tipo_propiedad', d.tipo_propiedad);
+      formData.append('operacion', d.operacion);
+      formData.append('ciudad', d.ciudad);
+      formData.append('estado', d.estado);
+      formData.append('precio', d.precio);
+      formData.append('recamaras', d.recamaras || '');
+      formData.append('banos', d.banos || '');
+      formData.append('metros_construidos', d.metros_construidos || '');
+
+      try {
+        const res = await fetch('/api/generar-imagen', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (result.imagen_url) {
+          const a = document.createElement('a');
+          a.href = result.imagen_url;
+          a.download = `instagram_${data.session_id}.jpg`;
+          a.click();
+          btn.textContent = '✅ Imagen Descargada';
+          document.getElementById('btnPublicar').disabled = false;
+          setTimeout(() => { btn.disabled = false; btn.textContent = '📸 Imagen Instagram'; }, 3000);
+        } else {
+          throw new Error(result.error || 'Error desconocido');
+        }
+      } catch (err) {
+        alert('❌ Error al generar imagen: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = '📸 Imagen Instagram';
+      }
+    }
+
+    async function generarVideo() {
+      const btn = document.getElementById('btnVideo');
+      const progressBox = document.getElementById('video-progress');
+      const progressBar = document.getElementById('video-progress-bar');
+      const statusTxt = document.getElementById('video-status');
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Generando video...';
+      progressBox.classList.remove('hidden');
+      progressBar.style.width = '5%';
+      statusTxt.textContent = 'Iniciando renderizado (puede tardar 1-2 minutos)...';
+
+      // Simulación de progreso visual mientras renderiza
+      let fakeProgress = 5;
+      const ticker = setInterval(() => {
+        if (fakeProgress < 85) {
+          fakeProgress += Math.random() * 3;
+          progressBar.style.width = fakeProgress + '%';
+        }
+      }, 2000);
+
+      const formData = new FormData();
+      formData.append('session_id', data.session_id);
+      formData.append('precio', d.precio);
+      formData.append('ciudad', d.ciudad);
+      formData.append('estado', d.estado);
+      formData.append('operacion', d.operacion);
+      formData.append('recamaras', d.recamaras || '');
+      formData.append('banos', d.banos || '');
+      formData.append('metros_construidos', d.metros_construidos || '');
+      formData.append('nombre_agente', d.nombre_agente);
+      formData.append('telefono_agente', d.telefono_agente);
+      formData.append('email_agente', d.email_agente);
+      formData.append('music_src', 'http://localhost:8000/static/music/suave.mp3');
+
+      try {
+        const res = await fetch('/api/generar-video', { method: 'POST', body: formData });
+        let result;
+        try { result = await res.json(); } catch(e) { result = {}; }
+
+        clearInterval(ticker);
+
+        if (result.video_url) {
+          progressBar.style.width = '100%';
+          statusTxt.textContent = '✅ ¡Video listo! Descargando...';
+          btn.textContent = '✅ Video Generado';
+          const a = document.createElement('a');
+          a.href = result.video_url;
+          a.download = `reel_${data.session_id}.mp4`;
+          a.click();
+          setTimeout(() => { btn.disabled = false; btn.textContent = '🎬 Generar Video'; }, 4000);
+        } else {
+          throw new Error(result.error || `Error HTTP ${res.status}`);
+        }
+      } catch (err) {
+        clearInterval(ticker);
+        progressBar.style.width = '0%';
+        statusTxt.textContent = '❌ Error: ' + err.message;
+        statusTxt.style.color = '#ef4444';
+        btn.disabled = false;
+        btn.textContent = '🎬 Generar Video';
+      }
+    }
+
+    async function publicarInstagram() {
+      const btn = document.getElementById('btnPublicar');
+      const feedback = document.getElementById('feedback-publicar');
+      btn.disabled = true;
+      btn.textContent = '⏳ Publicando...';
+      feedback.className = 'hidden';
+
+      const formData = new FormData();
+      formData.append('session_id', data.session_id);
+      formData.append('copy_instagram', data.copy_instagram);
+
+      try {
+        const res = await fetch('/api/publicar-instagram', { method: 'POST', body: formData });
+        let result;
+        try { result = await res.json(); } catch(e) { result = {}; }
+
+        if (result.success) {
+          btn.textContent = '✅ Publicado en Instagram';
+          feedback.textContent = '🎉 ¡Tu publicación fue enviada a Instagram exitosamente!';
+          feedback.style.color = '#16a34a';
+          feedback.className = '';
+        } else {
+          const errMsg = result.error || `Error HTTP ${res.status}`;
+          const esVencida = errMsg.toLowerCase().includes('expired') ||
+                            errMsg.toLowerCase().includes('unauthorized') ||
+                            errMsg.toLowerCase().includes('401') ||
+                            errMsg.toLowerCase().includes('invalid') ||
+                            errMsg.toLowerCase().includes('jwt');
+
+          if (esVencida) {
+            feedback.textContent = '🔑 Tu API key de Upload Post está vencida o es inválida. Renuévala en upload-post.com y actualiza el archivo .env.';
+          } else {
+            feedback.textContent = '❌ Error al publicar: ' + errMsg;
+          }
+          feedback.style.color = '#dc2626';
+          feedback.className = '';
+          btn.disabled = false;
+          btn.textContent = '🚀 Publicar en Instagram';
+        }
+      } catch (err) {
+        feedback.textContent = '❌ Error de conexión: ' + err.message;
+        feedback.style.color = '#dc2626';
+        feedback.className = '';
+        btn.disabled = false;
+        btn.textContent = '🚀 Publicar en Instagram';
+      }
+    }
+
+    async function generarPDF() {
+      const btn = document.getElementById('btnPdf');
+      btn.disabled = true;
+      btn.textContent = '⏳ Generando PDF...';
+
+      const formData = new FormData();
+      formData.append('session_id', data.session_id);
+      formData.append('tipo_propiedad', d.tipo_propiedad);
+      formData.append('operacion', d.operacion);
+      formData.append('direccion', d.direccion);
+      formData.append('ciudad', d.ciudad);
+      formData.append('estado', d.estado);
+      formData.append('precio', d.precio);
+      formData.append('recamaras', d.recamaras || '');
+      formData.append('banos', d.banos || '');
+      formData.append('metros_construidos', d.metros_construidos || '');
+      formData.append('metros_terreno', d.metros_terreno || '');
+      formData.append('estacionamientos', d.estacionamientos || '');
+      formData.append('amenidades', d.amenidades || '');
+      formData.append('descripcion', data.descripcion);
+      formData.append('nombre_agente', d.nombre_agente);
+      formData.append('telefono_agente', d.telefono_agente);
+      formData.append('email_agente', d.email_agente);
+
+      try {
+        const res = await fetch('/api/generar-pdf', { method: 'POST', body: formData });
+        const result = await res.json();
+
+        if (result.pdf_url) {
+          const a = document.createElement('a');
+          a.href = result.pdf_url;
+          a.download = `propiedad_${data.session_id}.pdf`;
+          a.click();
+          btn.textContent = '✅ PDF Descargado';
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.textContent = '📄 Descargar PDF';
+          }, 3000);
+        } else {
+          throw new Error(result.error || 'Error desconocido');
+        }
+      } catch (err) {
+        alert('❌ Error al generar el PDF: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = '📄 Descargar PDF';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+# Entorno virtual Python
+listapro/venv/
+
+# Base de datos
+listapro/*.db
+
+# Variables de entorno
+listapro/.env
+
+# Archivos generados y subidos
+listapro/uploads/
+listapro/generated/
+
+# Node modules del video
+listapro/video/node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de documentación y pruebas locales
+Imagenes/
+fotos-prueba/
+*.mp4
+*.docx
+*.pdf
+"Prompts y Apps*"

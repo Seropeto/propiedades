@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ToxiroPropiedades — Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>🏠 ToxiroPropiedades</h1>
+      <p>Propiedades guardadas</p>
+      <a href="/" class="btn-header">+ Nueva Propiedad</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="dashboard-search">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="🔍 Buscar por ciudad, tipo, precio, agente..."
+          autocomplete="off"
+        />
+      </div>
+      <div class="dashboard-tabs">
+        <button class="tab-btn active" data-estado="Todos">Todos</button>
+        <button class="tab-btn" data-estado="Activa">Activa</button>
+        <button class="tab-btn" data-estado="Cerrada">Cerrada</button>
+        <button class="tab-btn" data-estado="Retirada">Retirada</button>
+      </div>
+    </section>
+
+    <div id="propiedadesList">
+      <div class="loading-state"><p>Cargando propiedades...</p></div>
+    </div>
+  </main>
+
+  <script>
+    let allProps = [];
+    let filtroEstado = 'Todos';
+
+    const ESTADO_COLORS = {
+      'Activa':   { bg: 'rgba(74,222,128,0.12)',  color: '#4ade80', border: 'rgba(74,222,128,0.35)' },
+      'Cerrada':  { bg: 'rgba(201,168,76,0.12)',  color: '#C9A84C', border: 'rgba(201,168,76,0.35)' },
+      'Retirada': { bg: 'rgba(248,113,113,0.12)', color: '#f87171', border: 'rgba(248,113,113,0.35)' },
+    };
+
+    async function cargarPropiedades(q = '') {
+      const url = q ? `/api/propiedades?q=${encodeURIComponent(q)}` : '/api/propiedades';
+      const res = await fetch(url);
+      allProps = await res.json();
+      renderPropiedades();
+    }
+
+    function formatPrecio(valor) {
+      if (!valor) return '';
+      const num = parseFloat(valor.toString().replace(/[^0-9.]/g, ''));
+      if (isNaN(num)) return valor;
+      return num.toLocaleString('es-CL');
+    }
+
+    function renderPropiedades() {
+      const props = filtroEstado === 'Todos'
+        ? allProps
+        : allProps.filter(p => (p.estado_publicacion || 'Activa') === filtroEstado);
+
+      const container = document.getElementById('propiedadesList');
+      if (!props.length) {
+        container.innerHTML = `<div class="empty-state card"><p>No se encontraron propiedades.</p></div>`;
+        return;
+      }
+
+      container.innerHTML = props.map(p => {
+        const ep = p.estado_publicacion || 'Activa';
+        const c = ESTADO_COLORS[ep] || ESTADO_COLORS['Activa'];
+        const operBadge = p.operacion === 'Venta' ? '🔵 En Venta' : '🟢 En Arriendo';
+        return `
+        <div class="prop-card card">
+          <div class="prop-card-header">
+            <div>
+              <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                <span class="prop-badge">${operBadge}</span>
+                <span class="estado-badge" style="background:${c.bg};color:${c.color};border:1px solid ${c.border};">${ep}</span>
+              </div>
+              <h3>${p.tipo_propiedad} — ${p.ciudad}, ${p.estado}</h3>
+              <p class="prop-direccion">📍 ${p.direccion}</p>
+            </div>
+            <div class="prop-card-precio">💰 $${formatPrecio(p.precio)}</div>
+          </div>
+          <div class="prop-card-footer">
+            <span class="prop-fecha">🗓 ${p.creado_en}</span>
+            <div class="prop-card-actions">
+              <select class="estado-select" data-id="${p.session_id}" onchange="cambiarEstado(this)">
+                <option value="Activa"   ${ep === 'Activa'   ? 'selected' : ''}>Activa</option>
+                <option value="Cerrada"  ${ep === 'Cerrada'  ? 'selected' : ''}>Cerrada</option>
+                <option value="Retirada" ${ep === 'Retirada' ? 'selected' : ''}>Retirada</option>
+              </select>
+              <button class="btn-secondary btn-sm" onclick="verResultados('${p.session_id}')">👁 Ver</button>
+              <a href="/?editar=${p.session_id}" class="btn-edit btn-sm">✏️ Editar</a>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function cambiarEstado(select) {
+      const sessionId = select.dataset.id;
+      const nuevoEstado = select.value;
+
+      const fd = new FormData();
+      fd.append('estado_publicacion', nuevoEstado);
+
+      const res = await fetch(`/api/propiedades/${sessionId}/estado`, { method: 'PATCH', body: fd });
+      if (res.ok) {
+        // Actualizar en memoria y re-renderizar
+        const prop = allProps.find(p => p.session_id === sessionId);
+        if (prop) prop.estado_publicacion = nuevoEstado;
+        renderPropiedades();
+      } else {
+        alert('❌ No se pudo cambiar el estado.');
+        cargarPropiedades(document.getElementById('searchInput').value);
+      }
+    }
+
+    async function verResultados(sessionId) {
+      const res = await fetch(`/api/propiedades/${sessionId}`);
+      const d = await res.json();
+
+      const uploadsDir = `uploads/${sessionId}`;
+      let portadaUrl = '';
+      for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
+        const test = await fetch(`/${uploadsDir}/portada.${ext}`, { method: 'HEAD' });
+        if (test.ok) { portadaUrl = `/${uploadsDir}/portada.${ext}`; break; }
+      }
+
+      const extrasRes = await fetch(`/api/propiedades/${sessionId}/fotos`);
+      const extrasUrls = extrasRes.ok ? await extrasRes.json() : [];
+
+      const result = {
+        session_id: sessionId,
+        portada_url: portadaUrl,
+        extras_urls: extrasUrls,
+        descripcion: '— Abre "Editar" para regenerar el contenido —',
+        copy_instagram: '',
+        datos: {
+          tipo_propiedad: d.tipo_propiedad,
+          operacion: d.operacion,
+          direccion: d.direccion,
+          ciudad: d.ciudad,
+          estado: d.estado,
+          precio: d.precio,
+          recamaras: d.recamaras,
+          banos: d.banos,
+          metros_construidos: d.metros_construidos,
+          metros_terreno: d.metros_terreno,
+          estacionamientos: d.estacionamientos,
+          amenidades: d.amenidades,
+          nombre_agente: d.nombre_agente,
+          telefono_agente: d.telefono_agente,
+          email_agente: d.email_agente,
+        }
+      };
+      sessionStorage.setItem('listapro_result', JSON.stringify(result));
+      window.location.href = '/resultados';
+    }
+
+    // Tabs de filtro
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filtroEstado = btn.dataset.estado;
+        renderPropiedades();
+      });
+    });
+
+    // Búsqueda con debounce
+    let debounceTimer;
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => cargarPropiedades(e.target.value), 300);
+    });
+
+    cargarPropiedades();
+  </script>
+</body>
+</html>

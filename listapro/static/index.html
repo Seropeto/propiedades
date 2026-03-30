@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ToxiroPropiedades — Generador de Listados Inmobiliarios</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>🏠 ToxiroPropiedades</h1>
+      <p id="headerSubtitle">Genera contenido profesional para tus propiedades en segundos</p>
+      <a href="/dashboard" class="btn-header">📋 Mis Propiedades</a>
+    </div>
+  </header>
+
+  <main>
+    <form id="formProp" enctype="multipart/form-data">
+
+      <!-- SECCIÓN 1: DATOS DE LA PROPIEDAD -->
+      <section class="card">
+        <h2>📋 Datos de la Propiedad</h2>
+        <div class="grid-2">
+          <div class="field">
+            <label>Tipo de Propiedad *</label>
+            <select name="tipo_propiedad" required>
+              <option value="">Selecciona...</option>
+              <option value="Casa">Casa</option>
+              <option value="Departamento">Departamento</option>
+              <option value="Terreno">Terreno</option>
+              <option value="Penthouse">Penthouse</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Operación *</label>
+            <select name="operacion" required>
+              <option value="">Selecciona...</option>
+              <option value="Venta">Venta</option>
+              <option value="Arriendo">Arriendo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Dirección / Ubicación *</label>
+          <input type="text" name="direccion" placeholder="Ej: Calle Roble 45, Col. Las Flores" required />
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>Ciudad *</label>
+            <input type="text" name="ciudad" placeholder="Ej: Guadalajara" required />
+          </div>
+          <div class="field">
+            <label>Comuna *</label>
+            <input type="text" name="estado" placeholder="Ej: Las Condes" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Precio *</label>
+          <input type="text" name="precio" placeholder="Ej: 3,500,000" required />
+        </div>
+      </section>
+
+      <!-- SECCIÓN 2: CARACTERÍSTICAS -->
+      <section class="card">
+        <h2>📐 Características</h2>
+        <div class="grid-3">
+          <div class="field">
+            <label>Dormitorios</label>
+            <input type="number" name="recamaras" min="0" max="20" placeholder="3" />
+          </div>
+          <div class="field">
+            <label>Baños</label>
+            <input type="number" name="banos" min="0" max="20" step="0.5" placeholder="2" />
+          </div>
+          <div class="field">
+            <label>Estacionamientos</label>
+            <input type="number" name="estacionamientos" min="0" max="10" placeholder="2" />
+          </div>
+          <div class="field">
+            <label>Metros Construidos (m²)</label>
+            <input type="number" name="metros_construidos" min="0" placeholder="180" />
+          </div>
+          <div class="field">
+            <label>Metros de Terreno (m²)</label>
+            <input type="number" name="metros_terreno" min="0" placeholder="250" />
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 3: AMENIDADES -->
+      <section class="card">
+        <h2>✨ Amenidades</h2>
+        <div class="amenidades-grid">
+          <label class="check-item"><input type="checkbox" name="amenidades" value="alberca" /><span>🏊 Piscina</span></label>
+          <label class="check-item"><input type="checkbox" name="amenidades" value="jardin" /><span>🌿 Jardín</span></label>
+          <label class="check-item"><input type="checkbox" name="amenidades" value="seguridad" /><span>🔒 Seguridad 24h</span></label>
+          <label class="check-item"><input type="checkbox" name="amenidades" value="gimnasio" /><span>💪 Gimnasio</span></label>
+          <label class="check-item"><input type="checkbox" name="amenidades" value="estacionamiento_visitas" /><span>🚗 Est. Visitas</span></label>
+          <label class="check-item"><input type="checkbox" name="amenidades" value="area_juegos" /><span>🎠 Área de Juegos</span></label>
+          <label class="check-item"><input type="checkbox" name="amenidades" value="salon_eventos" /><span>🎉 Salón de Eventos</span></label>
+          <label class="check-item"><input type="checkbox" name="amenidades" value="roof_garden" /><span>🌇 Terraza</span></label>
+          <label class="check-item"><input type="checkbox" name="amenidades" value="bodega" /><span>📦 Bodega</span></label>
+          <label class="check-item"><input type="checkbox" name="amenidades" value="elevador" /><span>🛗 Elevador</span></label>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 4: DESCRIPCIÓN DEL AGENTE -->
+      <section class="card">
+        <h2>💬 Notas del Agente</h2>
+        <div class="field">
+          <label>¿Qué destacas de esta propiedad? *</label>
+          <textarea name="descripcion_agente" rows="3"
+            placeholder="Ej: Vista panorámica espectacular, acabados de lujo, ubicada en zona de alta plusvalía cerca de escuelas y centros comerciales." required></textarea>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 5: FOTOS -->
+      <section class="card">
+        <h2>📸 Fotos de la Propiedad</h2>
+        <div class="field">
+          <label>Foto de Portada * (imagen principal)</label>
+          <div class="upload-zone" id="portadaZone">
+            <input type="file" name="foto_portada" id="portadaInput" accept="image/*" required />
+            <div class="upload-placeholder" id="portadaPlaceholder">
+              <span>📁</span>
+              <p>Haz clic o arrastra tu foto de portada aquí</p>
+            </div>
+            <img id="portadaPreview" class="preview-img hidden" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Fotos Adicionales — máx. 7 <span id="extrasCount" style="color:#94a3b8;font-weight:400;">(0/7)</span></label>
+          <div class="upload-zone">
+            <input type="file" name="fotos_extra" id="extrasInput" accept="image/*" multiple />
+            <div class="upload-placeholder">
+              <span>📁</span>
+              <p>Haz clic o arrastra fotos adicionales aquí</p>
+            </div>
+          </div>
+          <div id="extrasPreview" class="extras-preview"></div>
+          <div id="extrasWarning" style="color:#ef4444;font-size:0.85rem;margin-top:6px;display:none;">
+            Máximo 7 fotos adicionales. Se usarán las primeras 7.
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 6: DATOS DEL AGENTE -->
+      <section class="card">
+        <h2>👤 Datos del Agente</h2>
+        <div class="grid-3">
+          <div class="field">
+            <label>Nombre completo *</label>
+            <input type="text" name="nombre_agente" placeholder="Ej: María González" required />
+          </div>
+          <div class="field">
+            <label>Teléfono *</label>
+            <input type="tel" name="telefono_agente" placeholder="Ej: 33 1234 5678" required />
+          </div>
+          <div class="field">
+            <label>Email *</label>
+            <input type="email" name="email_agente" placeholder="maria@inmobiliaria.com" required />
+          </div>
+        </div>
+      </section>
+
+      <div class="submit-area">
+        <button type="submit" id="btnGenerar">
+          <span id="btnTexto">✨ Generar Listado Profesional</span>
+          <span id="btnLoading" class="hidden">⏳ Generando con IA...</span>
+        </button>
+      </div>
+
+    </form>
+  </main>
+
+  <script>
+    // ── Modo edición ──────────────────────────────────────────────────────────
+    const editarId = new URLSearchParams(window.location.search).get('editar');
+
+    if (editarId) {
+      document.getElementById('headerSubtitle').textContent = 'Editando propiedad existente';
+      document.getElementById('btnTexto').textContent = '✨ Actualizar Listado';
+      document.getElementById('btnLoading').textContent = '⏳ Actualizando con IA...';
+      document.querySelector('[name="foto_portada"]').removeAttribute('required');
+
+      fetch(`/api/propiedades/${editarId}`)
+        .then(r => r.json())
+        .then(d => {
+          // Campos de texto
+          const set = (name, val) => {
+            const el = document.querySelector(`[name="${name}"]`);
+            if (el && val) el.value = val;
+          };
+          set('tipo_propiedad', d.tipo_propiedad);
+          set('operacion', d.operacion);
+          set('direccion', d.direccion);
+          set('ciudad', d.ciudad);
+          set('estado', d.estado);
+          set('precio', d.precio);
+          set('recamaras', d.recamaras);
+          set('banos', d.banos);
+          set('metros_construidos', d.metros_construidos);
+          set('metros_terreno', d.metros_terreno);
+          set('estacionamientos', d.estacionamientos);
+          set('descripcion_agente', d.descripcion_agente);
+          set('nombre_agente', d.nombre_agente);
+          set('telefono_agente', d.telefono_agente);
+          set('email_agente', d.email_agente);
+
+          // Amenidades
+          if (d.amenidades) {
+            d.amenidades.split(',').forEach(val => {
+              const cb = document.querySelector(`input[name="amenidades"][value="${val.trim()}"]`);
+              if (cb) cb.checked = true;
+            });
+          }
+
+          // Foto portada existente
+          const uploadsDir = `uploads/${editarId}`;
+          ['jpg','jpeg','png','webp'].reduce(async (prev, ext) => {
+            await prev;
+            const res = await fetch(`/${uploadsDir}/portada.${ext}`, { method: 'HEAD' });
+            if (res.ok) {
+              document.getElementById('portadaPreview').src = `/${uploadsDir}/portada.${ext}`;
+              document.getElementById('portadaPreview').classList.remove('hidden');
+              document.getElementById('portadaPlaceholder').classList.add('hidden');
+            }
+          }, Promise.resolve());
+
+          // Extras existentes
+          fetch(`/api/propiedades/${editarId}/fotos`)
+            .then(r => r.json())
+            .then(urls => {
+              const preview = document.getElementById('extrasPreview');
+              preview.innerHTML = '';
+              document.getElementById('extrasCount').textContent = `(${urls.length}/7)`;
+              urls.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = 'extra-thumb';
+                preview.appendChild(img);
+              });
+            });
+        });
+    }
+
+    // ── Preview foto portada ──────────────────────────────────────────────────
+    const portadaInput = document.getElementById('portadaInput');
+    const portadaPreview = document.getElementById('portadaPreview');
+    const portadaPlaceholder = document.getElementById('portadaPlaceholder');
+
+    portadaInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        portadaPreview.src = URL.createObjectURL(file);
+        portadaPreview.classList.remove('hidden');
+        portadaPlaceholder.classList.add('hidden');
+      }
+    });
+
+    // ── Preview fotos extra ───────────────────────────────────────────────────
+    const extrasInput = document.getElementById('extrasInput');
+    const extrasPreview = document.getElementById('extrasPreview');
+    const MAX_EXTRAS = 7;
+    const extrasCount = document.getElementById('extrasCount');
+    const extrasWarning = document.getElementById('extrasWarning');
+
+    extrasInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files).slice(0, MAX_EXTRAS);
+      extrasPreview.innerHTML = '';
+      extrasCount.textContent = `(${files.length}/${MAX_EXTRAS})`;
+      extrasCount.style.color = files.length >= MAX_EXTRAS ? '#ef4444' : '#94a3b8';
+      extrasWarning.style.display = e.target.files.length > MAX_EXTRAS ? 'block' : 'none';
+      if (e.target.files.length > MAX_EXTRAS) {
+        const dt = new DataTransfer();
+        files.forEach(f => dt.items.add(f));
+        extrasInput.files = dt.files;
+      }
+      files.forEach(file => {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.className = 'extra-thumb';
+        extrasPreview.appendChild(img);
+      });
+    });
+
+    // ── Submit ────────────────────────────────────────────────────────────────
+    const form = document.getElementById('formProp');
+    const btnGenerar = document.getElementById('btnGenerar');
+    const btnTexto = document.getElementById('btnTexto');
+    const btnLoading = document.getElementById('btnLoading');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btnGenerar.disabled = true;
+      btnTexto.classList.add('hidden');
+      btnLoading.classList.remove('hidden');
+
+      const formData = new FormData(form);
+
+      try {
+        const url = editarId ? `/api/propiedades/${editarId}` : '/api/generar';
+        const method = editarId ? 'PUT' : 'POST';
+        const response = await fetch(url, { method, body: formData });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.detail || err.error || 'Error al generar el listado');
+        }
+
+        const data = await response.json();
+        sessionStorage.setItem('listapro_result', JSON.stringify(data));
+        window.location.href = '/resultados';
+
+      } catch (error) {
+        alert('❌ Error: ' + error.message);
+        btnGenerar.disabled = false;
+        btnTexto.classList.remove('hidden');
+        btnLoading.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
