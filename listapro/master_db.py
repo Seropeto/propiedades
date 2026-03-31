@@ -126,6 +126,25 @@ def init_master_db():
 
         conn.commit()
 
+    # Crear admin por defecto si no existe ninguno
+    _ensure_default_admin()
+
+
+def _ensure_default_admin():
+    """Crea el admin de Toxiro Digital si la tabla está vacía."""
+    with get_master_db() as conn:
+        exists = conn.execute("SELECT id FROM admins LIMIT 1").fetchone()
+        if not exists:
+            salt = secrets.token_hex(16)
+            import hashlib
+            h = hashlib.sha256(f"{salt}ToxiroAdmin2026!".encode()).hexdigest()
+            password_hash = f"{salt}:{h}"
+            conn.execute("""
+                INSERT INTO admins (nombre, email, password_hash, rol)
+                VALUES (?, ?, ?, ?)
+            """, ("Rodrigo Castañeda P.", "contacto@toxirodigital.cloud", password_hash, "superadmin"))
+            conn.commit()
+
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 
