@@ -75,7 +75,7 @@ def get_db_legacy():
         return conn
 
 def init_db():
-    with get_db() as conn:
+    with get_db_legacy() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS propiedades (
                 session_id          TEXT PRIMARY KEY,
