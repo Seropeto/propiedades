@@ -1,9 +1,10 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, Request
 import asyncio
 from functools import partial
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from dotenv import load_dotenv
 from openai import OpenAI
 from typing import List, Optional
@@ -23,14 +24,55 @@ from datetime import datetime
 
 load_dotenv()
 
-# ── Base de datos ──────────────────────────────────────────────────────────────
-DB_PATH = "/data/db/listapro.db"
-os.makedirs("/data/db", exist_ok=True)
+# ── DB Maestra (multi-tenant) ─────────────────────────────────────────────────
+from master_db import (
+    get_cliente_por_slug, get_cliente_db, puede_generar,
+    registrar_listado_generado, log, init_master_db
+)
+init_master_db()
 
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+# ── Resolución de tenant por subdominio ───────────────────────────────────────
+def _slug_desde_host(host: str) -> str:
+    """
+    Extrae el slug del cliente a partir del header Host.
+    demo.toxirodigital.cloud  →  "demo"
+    localhost:8000            →  "demo"  (fallback para desarrollo)
+    """
+    if not host:
+        return "demo"
+    hostname = host.split(":")[0]          # quitar puerto
+    partes = hostname.split(".")
+    # Si es subdominio de toxirodigital.cloud (3+ partes) → primer segmento
+    if len(partes) >= 3:
+        return partes[0]
+    return "demo"                           # fallback local
+
+def get_tenant(request: Request):
+    """Retorna el dict de configuración del cliente resuelto por subdominio."""
+    slug = _slug_desde_host(request.headers.get("host", ""))
+    cliente = get_cliente_por_slug(slug)
+    if not cliente:
+        # Fallback a demo si el slug no existe
+        cliente = get_cliente_por_slug("demo")
+    return cliente
+
+# ── Base de datos del tenant ──────────────────────────────────────────────────
+def get_db(slug: str = "demo"):
+    return get_cliente_db(slug)
+
+# ── Compatibilidad con código existente (single-tenant → multi-tenant) ────────
+def get_db_legacy():
+    """Mantiene compatibilidad con llamadas get_db() sin argumentos.
+    Usa la DB del cliente 'demo' por defecto."""
+    try:
+        return get_cliente_db("demo")
+    except FileNotFoundError:
+        # Si aún no existe demo.db, usar listapro.db legacy
+        DB_PATH = "/data/db/listapro.db"
+        os.makedirs("/data/db", exist_ok=True)
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def init_db():
     with get_db() as conn:
@@ -69,12 +111,31 @@ init_db()
 
 app = FastAPI(title="ToxiroPropiedades - Generador de Propiedades")
 
+# ── Panel de administración Toxiro Digital ────────────────────────────────────
+from admin.router import router as admin_router
+from fastapi.staticfiles import StaticFiles as _StaticFiles
+app.include_router(admin_router)
+app.mount("/admin/static", _StaticFiles(directory="admin/static"), name="admin-static")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Middleware: inyecta tenant en cada request ────────────────────────────────
+class TenantMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Rutas del panel admin no necesitan tenant de cliente
+        if request.url.path.startswith("/admin"):
+            return await call_next(request)
+        cliente = get_tenant(request)
+        request.state.tenant = cliente
+        request.state.slug = cliente["slug"] if cliente else "demo"
+        return await call_next(request)
+
+app.add_middleware(TenantMiddleware)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
@@ -299,6 +360,7 @@ async def actualizar_propiedad(
 
 @app.post("/api/generar")
 async def generar_listado(
+    request: Request,
     tipo_propiedad: str = Form(...),
     operacion: str = Form(...),
     direccion: str = Form(...),
@@ -318,6 +380,26 @@ async def generar_listado(
     foto_portada: UploadFile = File(...),
     fotos_extra: List[UploadFile] = File(default=[]),
 ):
+    # ── Verificar límite de listados del tenant ───────────────────────────────
+    tenant = getattr(request.state, "tenant", None)
+    if tenant:
+        estado_uso = puede_generar(tenant["id"])
+        if not estado_uso["puede"]:
+            return JSONResponse({
+                "error": "limite_alcanzado",
+                "mensaje": (
+                    f"Has alcanzado el límite de {estado_uso['limite']} listados "
+                    f"para este mes. Puedes adquirir listados adicionales o "
+                    f"cambiar a un plan superior."
+                ),
+                "generados": estado_uso["generados"],
+                "limite": estado_uso["limite"],
+            }, status_code=402)
+        # Alerta al 80%
+        if estado_uso["porcentaje"] >= 80:
+            log(cliente_id=tenant["id"], accion="alerta_80_porciento",
+                detalles=f"{estado_uso['generados']}/{estado_uso['limite']}")
+
     # Guardar fotos
     session_id = str(uuid.uuid4())[:8]
     fotos_dir = f"uploads/{session_id}"
@@ -381,6 +463,13 @@ async def generar_listado(
             "Activa",
         ))
         conn.commit()
+
+    # ── Registrar listado generado en el contador del tenant ─────────────────
+    if tenant:
+        generados, bloqueado = registrar_listado_generado(tenant["id"])
+        log(cliente_id=tenant["id"], accion="generar_listado",
+            session_id_prop=session_id,
+            detalles=f"{generados}/{estado_uso['limite']}")
 
     return JSONResponse({
         "session_id": session_id,

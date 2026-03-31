@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Toxiro Digital — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f7f8f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .logo { color: #0C4DA2; font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    h1 { font-size: 1.5rem; font-weight: 800; color: #1a1a1a; margin-bottom: 4px; }
+    .sub { color: #575760; font-size: 0.85rem; margin-bottom: 32px; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    input {
+      width: 100%; padding: 10px 14px; border: 1px solid #d1d5db;
+      border-radius: 4px; font-family: 'Inter', sans-serif;
+      font-size: 0.9rem; color: #1a1a1a; margin-bottom: 18px;
+      transition: border-color 0.2s;
+    }
+    input:focus { outline: none; border-color: #0C4DA2; }
+    .btn {
+      width: 100%; background: #0C4DA2; color: #fff;
+      font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 700;
+      padding: 12px; border: none; border-radius: 4px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #0a3d85; }
+    .error {
+      background: #fee2e2; color: #dc2626; font-size: 0.82rem;
+      padding: 10px 14px; border-radius: 4px; margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">Toxiro Digital</div>
+    <h1>Panel de Administración</h1>
+    <p class="sub">Acceso exclusivo para el equipo de Toxiro</p>
+
+    <script>
+      if (new URLSearchParams(location.search).get('error')) {
+        document.write('<div class="error">Email o contraseña incorrectos.</div>');
+      }
+    </script>
+
+    <form method="POST" action="/admin/login">
+      <label>Email</label>
+      <input type="email" name="email" placeholder="contacto@toxirodigital.cloud" required autofocus/>
+      <label>Contraseña</label>
+      <input type="password" name="password" placeholder="••••••••" required/>
+      <button type="submit" class="btn">Ingresar →</button>
+    </form>
+  </div>
+</body>
+</html>

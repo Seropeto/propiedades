@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Toxiro Digital — Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f7f8f9; color: #222; min-height: 100vh; }
+
+    /* ── NAV ── */
+    nav {
+      background: #0C4DA2; color: #fff;
+      padding: 0 2rem; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { font-size: 0.9rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .nav-right { display: flex; gap: 1.5rem; align-items: center; }
+    .nav-right a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.82rem; font-weight: 600; }
+    .nav-right a:hover { color: #fff; }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+    /* ── MÉTRICAS ── */
+    .metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .metric {
+      background: #fff; border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      padding: 1.2rem 1.4rem;
+      border-left: 4px solid #0C4DA2;
+    }
+    .metric.warn  { border-left-color: #f97316; }
+    .metric.danger{ border-left-color: #dc2626; }
+    .metric.green { border-left-color: #16a34a; }
+    .metric-val { font-size: 2rem; font-weight: 800; color: #0C4DA2; line-height: 1; }
+    .metric.warn  .metric-val { color: #f97316; }
+    .metric.danger .metric-val { color: #dc2626; }
+    .metric.green  .metric-val { color: #16a34a; }
+    .metric-label { font-size: 0.75rem; color: #575760; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* ── TOOLBAR ── */
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem; }
+    .toolbar h2 { font-size: 1.1rem; font-weight: 800; }
+    .btn-primary {
+      background: #0C4DA2; color: #fff;
+      font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 700;
+      padding: 0.6rem 1.2rem; border: 2px solid #0C4DA2; border-radius: 4px;
+      cursor: pointer; transition: all 0.2s; text-decoration: none;
+    }
+    .btn-primary:hover { background: #fff; color: #0C4DA2; }
+    .btn-sm {
+      font-size: 0.72rem; padding: 0.3rem 0.7rem;
+      border-radius: 3px; border: none; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .btn-sm:hover { opacity: 0.8; }
+    .btn-green { background: #dcfce7; color: #16a34a; }
+    .btn-blue  { background: #dbeafe; color: #1d4ed8; }
+    .btn-orange{ background: #fed7aa; color: #c2410c; }
+    .btn-red   { background: #fee2e2; color: #dc2626; }
+
+    /* ── TABLA ── */
+    .table-wrap { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: auto; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    thead th { background: #0C4DA2; color: #fff; padding: 10px 14px; text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+    tbody td { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #f8faff; }
+
+    /* ── BADGES ── */
+    .badge { display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+    .badge-green  { background: #dcfce7; color: #16a34a; }
+    .badge-red    { background: #fee2e2; color: #dc2626; }
+    .badge-orange { background: #fed7aa; color: #c2410c; }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge-gray   { background: #f3f4f6; color: #6b7280; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-wrap { background: #f3f4f6; border-radius: 4px; height: 8px; width: 100px; overflow: hidden; }
+    .progress-bar  { height: 100%; border-radius: 4px; background: #0C4DA2; transition: width 0.3s; }
+    .progress-bar.warn   { background: #f97316; }
+    .progress-bar.danger { background: #dc2626; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200; display: none;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 8px; padding: 2rem;
+      width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .modal h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 1.2rem; }
+    .modal label { display: block; font-size: 0.78rem; font-weight: 600; color: #374151; margin-bottom: 4px; margin-top: 12px; }
+    .modal input, .modal select, .modal textarea {
+      width: 100%; padding: 8px 12px; border: 1px solid #d1d5db;
+      border-radius: 4px; font-family: 'Inter', sans-serif; font-size: 0.85rem;
+    }
+    .modal-footer { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+    .btn-cancel { background: #f3f4f6; color: #374151; font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600; padding: 0.6rem 1.2rem; border: none; border-radius: 4px; cursor: pointer; }
+
+    .section-title { font-size: 0.7rem; font-weight: 700; color: #b2b2be; text-transform: uppercase; letter-spacing: 0.08em; margin: 2rem 0 0.75rem; }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">Toxiro Digital — Admin</div>
+    <div class="nav-right">
+      <span id="navPeriodo" style="color:rgba(255,255,255,0.6);font-size:0.78rem;"></span>
+      <a href="/admin/logout">Cerrar sesión →</a>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- MÉTRICAS -->
+    <div class="metrics" id="metricas">
+      <div class="metric"><div class="metric-val">—</div><div class="metric-label">Clientes activos</div></div>
+      <div class="metric green"><div class="metric-val">—</div><div class="metric-label">Listados este mes</div></div>
+      <div class="metric warn"><div class="metric-val">—</div><div class="metric-label">Cerca del límite</div></div>
+      <div class="metric danger"><div class="metric-val">—</div><div class="metric-label">Bloqueados</div></div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div class="toolbar">
+      <h2>Clientes</h2>
+      <button class="btn-primary" onclick="abrirModalNuevoCliente()">+ Nuevo cliente</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Corredora</th>
+            <th>Subdominio</th>
+            <th>Plan</th>
+            <th>Uso del mes</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaClientes">
+          <tr><td colspan="6" style="text-align:center;color:#b2b2be;padding:2rem;">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- LOG RECIENTE -->
+    <div class="section-title">Actividad reciente</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Fecha</th><th>Cliente</th><th>Acción</th><th>Detalle</th></tr>
+        </thead>
+        <tbody id="tablaLog">
+          <tr><td colspan="4" style="text-align:center;color:#b2b2be;padding:1.5rem;">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /container -->
+
+
+  <!-- MODAL: NUEVO CLIENTE -->
+  <div class="modal-overlay" id="modalNuevoCliente">
+    <div class="modal">
+      <h3>Registrar nuevo cliente</h3>
+      <form id="formNuevoCliente">
+        <label>Nombre de la corredora *</label>
+        <input type="text" name="nombre_corredora" required placeholder="Inmobiliaria Los Andes"/>
+        <label>Slug (subdominio) *</label>
+        <input type="text" name="slug" required placeholder="los-andes" pattern="[a-z0-9\-]+" title="Solo minúsculas, números y guiones"/>
+        <small style="color:#575760;font-size:0.72rem;">Quedará: <strong id="prevSubdominio">__.toxirodigital.cloud</strong></small>
+        <label>Email de contacto *</label>
+        <input type="email" name="email_contacto" required placeholder="admin@corredora.cl"/>
+        <label>Teléfono</label>
+        <input type="text" name="telefono_contacto" placeholder="+56 9 1234 5678"/>
+        <label>Razón social</label>
+        <input type="text" name="razon_social" placeholder="Inmobiliaria Los Andes SpA"/>
+        <label>Cuenta Instagram</label>
+        <input type="text" name="cuenta_instagram" placeholder="@corredora_losandes"/>
+        <label>Plan</label>
+        <select name="tipo_plan">
+          <option value="basico">Básico — 20 listados/mes — USD 29</option>
+          <option value="profesional" selected>Profesional — 60 listados/mes — USD 49</option>
+          <option value="agencia">Agencia — Ilimitado — USD 89</option>
+        </select>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="cerrarModal('modalNuevoCliente')">Cancelar</button>
+          <button type="submit" class="btn-primary">Crear cliente →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: TOP-UP -->
+  <div class="modal-overlay" id="modalTopup">
+    <div class="modal">
+      <h3>Agregar listados adicionales</h3>
+      <input type="hidden" id="topupClienteId"/>
+      <label>Cantidad de listados a agregar</label>
+      <input type="number" id="topupCantidad" value="10" min="1" max="100"/>
+      <label>Precio cobrado (USD)</label>
+      <input type="number" id="topupPrecio" value="8" step="0.01"/>
+      <label>Método de pago</label>
+      <select id="topupMetodo">
+        <option value="transferencia">Transferencia bancaria</option>
+        <option value="webpay">WebPay</option>
+        <option value="manual">Manual / Cortesía</option>
+      </select>
+      <label>Referencia / Comprobante</label>
+      <input type="text" id="topupReferencia" placeholder="N° transferencia o comprobante"/>
+      <label>Notas</label>
+      <textarea id="topupNotas" rows="2" placeholder="Observaciones internas..."></textarea>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="cerrarModal('modalTopup')">Cancelar</button>
+        <button class="btn-primary" onclick="enviarTopup()">Aprobar top-up →</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // ── Cargar métricas ──────────────────────────────────────────────────────
+    async function cargarMetricas() {
+      const r = await fetch('/admin/api/metricas');
+      const d = await r.json();
+      document.getElementById('navPeriodo').textContent = 'Período: ' + d.periodo;
+      const m = document.getElementById('metricas').children;
+      m[0].querySelector('.metric-val').textContent = d.total_clientes;
+      m[1].querySelector('.metric-val').textContent = d.total_listados_mes;
+      m[2].querySelector('.metric-val').textContent = d.clientes_cerca_limite;
+      m[3].querySelector('.metric-val').textContent = d.clientes_al_limite;
+    }
+
+    // ── Cargar clientes ──────────────────────────────────────────────────────
+    async function cargarClientes() {
+      const r = await fetch('/admin/api/clientes');
+      const clientes = await r.json();
+      const tbody = document.getElementById('tablaClientes');
+      if (!clientes.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#b2b2be;padding:2rem;">Sin clientes registrados</td></tr>';
+        return;
+      }
+      tbody.innerHTML = clientes.map(c => {
+        const pct = c.uso_pct || 0;
+        const barClass = pct >= 100 ? 'danger' : pct >= 80 ? 'warn' : '';
+        const badgePlan = { basico: 'badge-gray', profesional: 'badge-blue', agencia: 'badge-green' }[c.tipo_plan] || 'badge-gray';
+        const estadoBadge = c.activo
+          ? '<span class="badge badge-green">Activo</span>'
+          : '<span class="badge badge-red">Suspendido</span>';
+        const bloquedoBadge = c.bloqueado
+          ? '<span class="badge badge-red" style="margin-left:4px;">Bloqueado</span>' : '';
+        return `<tr>
+          <td>
+            <div style="font-weight:700;">${c.nombre_display || c.nombre_corredora}</div>
+            <div style="font-size:0.72rem;color:#575760;">${c.email_contacto}</div>
+          </td>
+          <td style="font-size:0.78rem;color:#0C4DA2;">${c.subdominio || c.slug}.toxirodigital.cloud</td>
+          <td><span class="badge ${badgePlan}">${(c.tipo_plan||'—').charAt(0).toUpperCase()+(c.tipo_plan||'').slice(1)}</span></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="progress-wrap"><div class="progress-bar ${barClass}" style="width:${Math.min(pct,100)}%"></div></div>
+              <span style="font-size:0.75rem;color:#575760;">${c.listados_generados}/${c.listados_limite}</span>
+            </div>
+            ${bloquedoBadge}
+          </td>
+          <td>${estadoBadge}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn-sm btn-blue" onclick="abrirTopup(${c.id})">Top-up</button>
+              ${c.bloqueado ? `<button class="btn-sm btn-green" onclick="desbloquear(${c.id})">Desbloquear</button>` : ''}
+              ${c.activo
+                ? `<button class="btn-sm btn-red" onclick="toggleEstado(${c.id},0)">Suspender</button>`
+                : `<button class="btn-sm btn-green" onclick="toggleEstado(${c.id},1)">Activar</button>`
+              }
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ── Cargar log ───────────────────────────────────────────────────────────
+    async function cargarLog() {
+      const r = await fetch('/admin/api/log?limit=20');
+      const rows = await r.json();
+      const tbody = document.getElementById('tablaLog');
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#b2b2be;padding:1.5rem;">Sin actividad registrada</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(r => `<tr>
+        <td style="font-size:0.75rem;color:#575760;white-space:nowrap;">${r.creado_en?.slice(0,16)||'—'}</td>
+        <td style="font-weight:600;">${r.nombre_corredora||'—'}</td>
+        <td><span class="badge badge-blue">${r.accion}</span></td>
+        <td style="font-size:0.75rem;color:#575760;">${r.detalles||''}</td>
+      </tr>`).join('');
+    }
+
+    // ── Nuevo cliente ────────────────────────────────────────────────────────
+    function abrirModalNuevoCliente() {
+      document.getElementById('modalNuevoCliente').classList.add('open');
+    }
+    document.querySelector('[name="slug"]') && document.querySelector('[name="slug"]').addEventListener('input', function() {
+      document.getElementById('prevSubdominio').textContent = (this.value||'__') + '.toxirodigital.cloud';
+    });
+    document.getElementById('formNuevoCliente').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('[type="submit"]');
+      btn.disabled = true; btn.textContent = 'Creando...';
+      const fd = new FormData(e.target);
+      const r = await fetch('/admin/api/clientes', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (d.ok) {
+        cerrarModal('modalNuevoCliente');
+        alert('✅ Cliente creado: ' + d.subdominio);
+        cargarClientes(); cargarMetricas();
+      } else {
+        alert('❌ ' + (d.error || 'Error al crear'));
+        btn.disabled = false; btn.textContent = 'Crear cliente →';
+      }
+    });
+
+    // ── Top-up ───────────────────────────────────────────────────────────────
+    function abrirTopup(clienteId) {
+      document.getElementById('topupClienteId').value = clienteId;
+      document.getElementById('modalTopup').classList.add('open');
+    }
+    async function enviarTopup() {
+      const clienteId = document.getElementById('topupClienteId').value;
+      const fd = new FormData();
+      fd.append('cantidad', document.getElementById('topupCantidad').value);
+      fd.append('precio_usd', document.getElementById('topupPrecio').value);
+      fd.append('metodo_pago', document.getElementById('topupMetodo').value);
+      fd.append('referencia_pago', document.getElementById('topupReferencia').value);
+      fd.append('notas', document.getElementById('topupNotas').value);
+      const r = await fetch(`/admin/api/clientes/${clienteId}/topup`, { method: 'POST', body: fd });
+      const d = await r.json();
+      if (d.ok) {
+        cerrarModal('modalTopup');
+        alert(`✅ ${d.listados_agregados} listados agregados`);
+        cargarClientes();
+      } else {
+        alert('❌ ' + (d.error || 'Error'));
+      }
+    }
+
+    // ── Estado cliente ───────────────────────────────────────────────────────
+    async function toggleEstado(id, activo) {
+      const accion = activo ? 'activar' : 'suspender';
+      if (!confirm(`¿Confirmas ${accion} este cliente?`)) return;
+      const fd = new FormData(); fd.append('activo', activo);
+      await fetch(`/admin/api/clientes/${id}/estado`, { method: 'POST', body: fd });
+      cargarClientes();
+    }
+
+    async function desbloquear(id) {
+      await fetch(`/admin/api/clientes/${id}/desbloquear`, { method: 'POST' });
+      cargarClientes();
+    }
+
+    // ── Cerrar modal ─────────────────────────────────────────────────────────
+    function cerrarModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+    });
+
+    // ── Slug preview ─────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      const slugInput = document.querySelector('[name="slug"]');
+      if (slugInput) {
+        slugInput.addEventListener('input', () => {
+          document.getElementById('prevSubdominio').textContent =
+            (slugInput.value || '__') + '.toxirodigital.cloud';
+        });
+      }
+    });
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    cargarMetricas();
+    cargarClientes();
+    cargarLog();
+    setInterval(() => { cargarMetricas(); cargarClientes(); }, 30000);
+  </script>
+</body>
+</html>
